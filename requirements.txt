@@ -1,0 +1,4 @@
+faker
+pytest-django
+pytest-selenium
+selenium
