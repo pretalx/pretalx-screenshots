@@ -9,11 +9,11 @@ from django.utils.translation import ugettext as _
 from i18nfield.strings import LazyI18nString
 
 
-@pytest.yield_fixture(params=["en", "de_DE"], autouse=True)
-def locale(request):
-    from django.conf import settings
-    translation.activate(request.param or settings.LANGUAGE_CODE)
-    yield request.param
+# @pytest.yield_fixture(params=["en", "de_DE"], autouse=True)
+# def locale(request):
+#     from django.conf import settings
+#     translation.activate(request.param or settings.LANGUAGE_CODE)
+#     yield request.param
 
 
 @pytest.fixture
