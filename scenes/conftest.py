@@ -14,10 +14,13 @@ from i18nfield.strings import LazyI18nString
 #     from django.conf import settings
 #     translation.activate(request.param or settings.LANGUAGE_CODE)
 #     yield request.param
+#     # TODO: when enabling this again, replace the fixture definitions below with their locale enabled versions
 
 
 @pytest.fixture
-def user(locale):
+def user():
+#def user(locale):
+    locale = 'en'
     from pretalx.person.models import User
     return User.objects.create_user(email='john@example.org', name=_('John Doe'), locale=locale, password='john')
 
@@ -39,14 +42,16 @@ def admin_team(organiser, user):
 
 
 @pytest.fixture
-def organiser(user, locale):
+def organiser(user):
+#def organiser(user, locale):
     from pretalx.event.models import Organiser
     o = Organiser.objects.create(name=_('Super Organiser'), slug='superorganiser')
     return o
 
 
 @pytest.fixture
-def event(organiser, locale):
+def event(organiser):
+#def event(organiser, locale):
     from pretalx.event.models import Event
     today = datetime.date.today()
     event = Event.objects.create(
@@ -60,22 +65,25 @@ def event(organiser, locale):
     )
     # exporting takes quite some time, so this speeds up our tests
     event.settings.export_html_on_schedule_release = False
-    if locale in ['en', 'de']:
-        event.settings.locales = ['en', 'de']
-    else:
-        event.settings.locales = ['en', locale]
-    event.settings.language = locale
+    event.settings.display_header_pattern = 'topo'
+    # if locale in ['en', 'de']:
+    #     event.settings.locales = ['en', 'de']
+    # else:
+    #     event.settings.locales = ['en', locale]
+    # event.settings.language = locale
     return event
 
 
 @pytest.fixture
-def client(live_server, selenium, user, admin_team, locale):
+def client(live_server, selenium, user, admin_team):
+#def client(live_server, selenium, user, admin_team, locale):
     selenium.implicitly_wait(10)
     return selenium
 
 
 @pytest.fixture
-def logged_in_client(live_server, selenium, user, admin_team, locale):
+def logged_in_client(live_server, selenium, user, admin_team):
+#def logged_in_client(live_server, selenium, user, admin_team, locale):
     selenium.get(live_server.url + '/orga/login/')
     selenium.implicitly_wait(10)
 
