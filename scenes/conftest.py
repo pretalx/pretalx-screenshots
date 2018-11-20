@@ -9,6 +9,19 @@ from django.utils.translation import ugettext as _
 from i18nfield.strings import LazyI18nString
 
 
+@pytest.fixture
+def chrome_options(chrome_options):
+    chrome_options.add_argument('headless')
+    chrome_options.add_argument('window-size=1024x768')
+    return chrome_options
+
+
+@pytest.fixture
+def firefox_options(firefox_options):
+    firefox_options.add_argument('headless')
+    return firefox_options
+
+
 # @pytest.yield_fixture(params=["en", "de_DE"], autouse=True)
 # def locale(request):
 #     from django.conf import settings
@@ -94,13 +107,30 @@ def logged_in_client(live_server, selenium, user, admin_team):
 
 
 @pytest.fixture
-def chrome_options(chrome_options):
-    chrome_options.add_argument('headless')
-    chrome_options.add_argument('window-size=1024x768')
-    return chrome_options
+def speaker_question(event):
+    from pretalx.submission.models import Question, QuestionVariant
+    return Question.objects.create(
+        event=event,
+        question='Do you have dietary requirements?',
+        variant=QuestionVariant.STRING,
+        target='speaker',
+        required=False,
+    )
 
 
 @pytest.fixture
-def firefox_options(firefox_options):
-    firefox_options.add_argument('headless')
-    return firefox_options
+def submission_question(event):
+    from pretalx.submission.models import Question, AnswerOption, QuestionVariant
+    question = Question.objects.create(
+        event=event,
+        question='Which of these will you require for your presentation?',
+        variant=QuestionVariant.MULTIPLE,
+        target='submission',
+        required=False,
+    )
+    AnswerOption.objects.create(answer='Projector', question=question)
+    AnswerOption.objects.create(answer='Sound playback', question=question)
+    AnswerOption.objects.create(answer='Presentation laptop', question=question)
+    AnswerOption.objects.create(answer='Laser pointer', question=question)
+    AnswerOption.objects.create(answer='Assistant', question=question)
+    return question
