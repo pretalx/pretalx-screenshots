@@ -1,0 +1,2 @@
+#!/bin/bash
+rsync -avzu --progress -h screens/* $1:/usr/share/webapps/img.pretalx.com
