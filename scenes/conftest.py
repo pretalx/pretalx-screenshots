@@ -81,7 +81,7 @@ def event(organiser):
         slug='test',
         email='orga@orga.org',
         date_from=today,
-        date_to=today + datetime.timedelta(days=3),
+        date_to=today + datetime.timedelta(days=1),
         organiser=organiser,
     )
     # exporting takes quite some time, so this speeds up our tests
@@ -199,13 +199,17 @@ def submission(submission_data, speaker):
 
 @pytest.fixture
 def room(event):
-    from pretalx.schedule.models import Room
+    from pretalx.schedule.models import Room, Availability
 
-    return Room.objects.create(name=_('Hall 1.01'), event=event)
+    room = Room.objects.create(name=_('Hall 1.01'), event=event)
+    Availability.objects.create(room=room, event=event, start=event.date_from, end=event.date_to)
+    return room
 
 
 @pytest.fixture
 def other_room(event):
-    from pretalx.schedule.models import Room
+    from pretalx.schedule.models import Room, Availability
 
-    return Room.objects.create(name=_('Hall 1.04'), event=event)
+    room = Room.objects.create(name=_('Hall 1.04'), event=event)
+    Availability.objects.create(room=room, event=event, start=event.date_from, end=event.date_to)
+    return Room

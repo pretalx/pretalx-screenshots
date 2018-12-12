@@ -1,4 +1,5 @@
 import pytest
+from datetime import datetime, time
 
 from django.conf import settings
 
@@ -53,12 +54,21 @@ def shot_review_submission(
 
 @pytest.mark.django_db
 def shot_bare_schedule_editor(
-    live_server, event, admin_team, logged_in_client, submission, room, other_room
+    live_server, event, admin_team, logged_in_client, submission, room, other_room,
 ):
     submission.accept()
+    submission.confirm()
+    submission.slots.update(start=datetime.combine(event.date_from, time(4, 0)), room=room)
     logged_in_client.get(
         live_server.url + '/orga/event/{}/schedule/'.format(event.slug)
     )
+    logged_in_client.execute_script("""
+const selectors = [".alert", ".schedule-header"]
+for (selector of selectors) {
+    var element = document.querySelector(selector);
+    if (element)
+        element.parentNode.removeChild(element);
+}""")
     screenshot(logged_in_client, 'website/edit_schedule.png')
 
 
