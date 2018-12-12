@@ -30,7 +30,7 @@ def shot_edit_plugins(live_server, event, admin_team, logged_in_client, user):
     logged_in_client.get(
         live_server.url + '/orga/event/{}/settings/plugins'.format(event.slug)
     )
-    screenshot(logged_in_client, 'website/plugin_settings.png')
+    screenshot(logged_in_client, 'website/plugin_settings.png', scroll=False)
 
 
 @pytest.mark.django_db
