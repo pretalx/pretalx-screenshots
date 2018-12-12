@@ -63,7 +63,7 @@ def shot_bare_schedule_editor(
 
 
 @pytest.mark.django_db
-def shot_bare_schedule_editor(
+def shot_export_schedule_editor(
     live_server, event, admin_team, logged_in_client, submission, room, other_room
 ):
     event.wip_schedule.freeze('v1')
