@@ -49,6 +49,7 @@ def admin_team(organiser, user):
         can_change_organiser_settings=True,
         can_change_event_settings=True,
         can_change_submissions=True,
+        is_reviewer=True,
     )
     t.members.add(user)
     return t
@@ -134,3 +135,63 @@ def submission_question(event):
     AnswerOption.objects.create(answer='Laser pointer', question=question)
     AnswerOption.objects.create(answer='Assistant', question=question)
     return question
+
+
+@pytest.fixture
+def speaker(event):
+    from pretalx.person.models import SpeakerProfile, User
+    user = User.objects.create_user(
+        password='speakerpwd1!', name='Jane Speaker', email='jane@speaker.org'
+    )
+    SpeakerProfile.objects.create(
+        user=user, event=event, biography='Best speaker in the world.'
+    )
+    return user
+
+
+@pytest.fixture
+def speaker_client(client, speaker):
+    client.force_login(speaker)
+    return client
+
+
+@pytest.fixture
+def submission_type(event):
+    from pretalx.submission.models import SubmissionType
+    return SubmissionType.objects.create(
+        name='Talk', event=event, default_duration=60
+    )
+
+
+@pytest.fixture
+def submission_data(event, submission_type):
+    return {
+        'title': 'Integrating docker in your devops workflow',
+        'submission_type': submission_type,
+        'abstract': 'In this talk, I will present the integration of Docker in a variety of devops workflows. We will approach several devops philosophies and see how containerizing environments can improve them.',
+        'description': 'I am a leading Docker expert and have worked the last twenty years as a senior devops consultant.',
+        'notes': 'My presentation would be better with sound, so if you could provide that, I would be thankful',
+        'content_locale': 'en',
+        'event': event,
+    }
+
+
+@pytest.fixture
+def submission(submission_data, speaker):
+    from pretalx.submission.models import Submission
+    sub = Submission.objects.create(**submission_data)
+    sub.save()
+    sub.speakers.add(speaker)
+    return sub
+
+
+@pytest.fixture
+def room(event):
+    from pretalx.schedule.models import Room
+    return Room.objects.create(name=_('Hall 1.01'), event=event)
+
+
+@pytest.fixture
+def other_room(event):
+    from pretalx.schedule.models import Room
+    return Room.objects.create(name=_('Hall 1.04'), event=event)
