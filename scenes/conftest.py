@@ -109,10 +109,10 @@ def logged_in_client(live_server, selenium, user, admin_team):
     selenium.get(live_server.url + '/orga/login/')
     selenium.implicitly_wait(10)
 
-    selenium.find_element_by_css_selector("form input[name=email]").send_keys(
+    selenium.find_element_by_css_selector("form input[name=login_email]").send_keys(
         user.email
     )
-    selenium.find_element_by_css_selector("form input[name=password]").send_keys('john')
+    selenium.find_element_by_css_selector("form input[name=login_password]").send_keys('john')
     selenium.find_element_by_css_selector("form button[type=submit]").click()
     return selenium
 
