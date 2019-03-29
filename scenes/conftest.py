@@ -55,6 +55,7 @@ def admin_team(organiser, user):
         can_change_event_settings=True,
         can_change_submissions=True,
         is_reviewer=True,
+        all_events=True,
     )
     t.members.add(user)
     return t

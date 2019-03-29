@@ -7,7 +7,7 @@ from ...utils import screenshot
 
 
 @pytest.mark.django_db
-def shot_edit_cfp_settings(live_server, event, admin_team, logged_in_client):
+def shot_edit_cfp_settings(live_server, event, logged_in_client):
     logged_in_client.get(
         live_server.url + '/orga/event/{}/cfp/text#information'.format(event.slug)
     )
