@@ -7,6 +7,7 @@ import pytz
 from django.utils import translation
 from django.utils.timezone import now
 from django.utils.translation import ugettext as _
+from django_scopes import scope, scopes_disabled
 from i18nfield.strings import LazyI18nString
 
 
@@ -46,18 +47,19 @@ def user():
 def admin_team(organiser, user):
     from pretalx.event.models import Team
 
-    t = Team.objects.create(
-        name=_('Organisers'),
-        organiser=organiser,
-        can_create_events=True,
-        can_change_teams=True,
-        can_change_organiser_settings=True,
-        can_change_event_settings=True,
-        can_change_submissions=True,
-        is_reviewer=True,
-        all_events=True,
-    )
-    t.members.add(user)
+    with scopes_disabled():
+        t = Team.objects.create(
+            name=_('Organisers'),
+            organiser=organiser,
+            can_create_events=True,
+            can_change_teams=True,
+            can_change_organiser_settings=True,
+            can_change_event_settings=True,
+            can_change_submissions=True,
+            is_reviewer=True,
+            all_events=True,
+        )
+        t.members.add(user)
     return t
 
 
@@ -66,7 +68,8 @@ def organiser(user):
     # def organiser(user, locale):
     from pretalx.event.models import Organiser
 
-    o = Organiser.objects.create(name=_('Super Organiser'), slug='superorganiser')
+    with scopes_disabled():
+        o = Organiser.objects.create(name=_('Super Organiser'), slug='superorganiser')
     return o
 
 
@@ -76,18 +79,19 @@ def event(organiser):
     from pretalx.event.models import Event
 
     today = date.today()
-    event = Event.objects.create(
-        name='Meta Event Tech Alternative',
-        is_public=True,
-        slug='test',
-        email='orga@orga.org',
-        date_from=today,
-        date_to=today + timedelta(days=1),
-        organiser=organiser,
-    )
-    # exporting takes quite some time, so this speeds up our tests
-    event.settings.export_html_on_schedule_release = False
-    event.settings.display_header_pattern = 'topo'
+    with scopes_disabled():
+        event = Event.objects.create(
+            name='Meta Event Tech Alternative',
+            is_public=True,
+            slug='test',
+            email='orga@orga.org',
+            date_from=today,
+            date_to=today + timedelta(days=1),
+            organiser=organiser,
+        )
+        # exporting takes quite some time, so this speeds up our tests
+        event.settings.export_html_on_schedule_release = False
+        event.settings.display_header_pattern = 'topo'
     # if locale in ['en', 'de']:
     #     event.settings.locales = ['en', 'de']
     # else:
@@ -121,31 +125,33 @@ def logged_in_client(live_server, selenium, user, admin_team):
 def speaker_question(event):
     from pretalx.submission.models import Question, QuestionVariant
 
-    return Question.objects.create(
-        event=event,
-        question='Do you have dietary requirements?',
-        variant=QuestionVariant.STRING,
-        target='speaker',
-        required=False,
-    )
+    with scope(event=event):
+        return Question.objects.create(
+            event=event,
+            question='Do you have dietary requirements?',
+            variant=QuestionVariant.STRING,
+            target='speaker',
+            required=False,
+        )
 
 
 @pytest.fixture
 def submission_question(event):
     from pretalx.submission.models import Question, AnswerOption, QuestionVariant
 
-    question = Question.objects.create(
-        event=event,
-        question='Which of these will you require for your presentation?',
-        variant=QuestionVariant.MULTIPLE,
-        target='submission',
-        required=False,
-    )
-    AnswerOption.objects.create(answer='Projector', question=question)
-    AnswerOption.objects.create(answer='Sound playback', question=question)
-    AnswerOption.objects.create(answer='Presentation laptop', question=question)
-    AnswerOption.objects.create(answer='Laser pointer', question=question)
-    AnswerOption.objects.create(answer='Assistant', question=question)
+    with scope(event=event):
+        question = Question.objects.create(
+            event=event,
+            question='Which of these will you require for your presentation?',
+            variant=QuestionVariant.MULTIPLE,
+            target='submission',
+            required=False,
+        )
+        AnswerOption.objects.create(answer='Projector', question=question)
+        AnswerOption.objects.create(answer='Sound playback', question=question)
+        AnswerOption.objects.create(answer='Presentation laptop', question=question)
+        AnswerOption.objects.create(answer='Laser pointer', question=question)
+        AnswerOption.objects.create(answer='Assistant', question=question)
     return question
 
 
@@ -156,9 +162,10 @@ def speaker(event):
     user = User.objects.create_user(
         password='speakerpwd1!', name='Jane Speaker', email='jane@speaker.org'
     )
-    SpeakerProfile.objects.create(
-        user=user, event=event, biography='Best speaker in the world.'
-    )
+    with scope(event=event):
+        SpeakerProfile.objects.create(
+            user=user, event=event, biography='Best speaker in the world.'
+        )
     return user
 
 
@@ -172,29 +179,32 @@ def speaker_client(client, speaker):
 def submission_type(event):
     from pretalx.submission.models import SubmissionType
 
-    return SubmissionType.objects.create(name='Talk', event=event, default_duration=60)
+    with scope(event=event):
+        return SubmissionType.objects.create(name='Talk', event=event, default_duration=60)
 
 
 @pytest.fixture
 def submission_data(event, submission_type):
-    return {
-        'title': 'Integrating docker in your devops workflow',
-        'submission_type': submission_type,
-        'abstract': 'In this talk, I will present the integration of Docker in a variety of devops workflows. We will approach several devops philosophies and see how containerizing environments can improve them.',
-        'description': 'I am a leading Docker expert and have worked the last twenty years as a senior devops consultant.',
-        'notes': 'My presentation would be better with sound, so if you could provide that, I would be thankful',
-        'content_locale': 'en',
-        'event': event,
-    }
+    with scope(event=event):
+        return {
+            'title': 'Integrating docker in your devops workflow',
+            'submission_type': submission_type,
+            'abstract': 'In this talk, I will present the integration of Docker in a variety of devops workflows. We will approach several devops philosophies and see how containerizing environments can improve them.',
+            'description': 'I am a leading Docker expert and have worked the last twenty years as a senior devops consultant.',
+            'notes': 'My presentation would be better with sound, so if you could provide that, I would be thankful',
+            'content_locale': 'en',
+            'event': event,
+        }
 
 
 @pytest.fixture
 def submission(submission_data, speaker):
     from pretalx.submission.models import Submission
 
-    sub = Submission.objects.create(**submission_data)
-    sub.save()
-    sub.speakers.add(speaker)
+    with scope(event=submission_data["event"]):
+        sub = Submission.objects.create(**submission_data)
+        sub.save()
+        sub.speakers.add(speaker)
     return sub
 
 
@@ -202,10 +212,11 @@ def submission(submission_data, speaker):
 def other_submission(submission_data, speaker):
     from pretalx.submission.models import Submission
 
-    submission_data['title'] = 'Start Up Start Down'
-    sub = Submission.objects.create(**submission_data)
-    sub.save()
-    sub.speakers.add(speaker)
+    with scope(event=submission_data["event"]):
+        submission_data['title'] = 'Start Up Start Down'
+        sub = Submission.objects.create(**submission_data)
+        sub.save()
+        sub.speakers.add(speaker)
     return sub
 
 
@@ -213,8 +224,9 @@ def other_submission(submission_data, speaker):
 def room(event):
     from pretalx.schedule.models import Room, Availability
 
-    room = Room.objects.create(name=_('Hall 1.01'), event=event)
-    Availability.objects.create(room=room, event=event, start=event.date_from, end=event.date_to)
+    with scope(event=event):
+        room = Room.objects.create(name=_('Hall 1.01'), event=event)
+        Availability.objects.create(room=room, event=event, start=event.date_from, end=event.date_to)
     return room
 
 
@@ -222,27 +234,31 @@ def room(event):
 def other_room(event):
     from pretalx.schedule.models import Room, Availability
 
-    room = Room.objects.create(name=_('Hall 1.04'), event=event)
-    Availability.objects.create(room=room, event=event, start=event.date_from, end=event.date_to)
+    with scope(event=event):
+        room = Room.objects.create(name=_('Hall 1.04'), event=event)
+        Availability.objects.create(room=room, event=event, start=event.date_from, end=event.date_to)
     return room
 
 
 @pytest.fixture
 def slot(submission, room):
-    submission.accept()
-    submission.confirm()
-    submission.slots.update(start=datetime.combine(submission.event.date_from, time(4, 30)), room=room)
-    return submission.slots.first()
+    with scope(event=room.event):
+        submission.accept()
+        submission.confirm()
+        submission.slots.update(start=datetime.combine(submission.event.date_from, time(4, 30)), room=room)
+        return submission.slots.first()
 
 
 @pytest.fixture
 def other_slot(other_submission, other_room):
-    other_submission.accept()
-    other_submission.confirm()
-    other_submission.slots.update(start=datetime.combine(other_submission.event.date_from, time(7, 30)), room=other_room)
-    return other_submission.slots.first()
+    with scope(event=other_room.event):
+        other_submission.accept()
+        other_submission.confirm()
+        other_submission.slots.update(start=datetime.combine(other_submission.event.date_from, time(7, 30)), room=other_room)
+        return other_submission.slots.first()
 
 
 @pytest.fixture
 def schedule(slot, other_slot):
-    return slot.submission.event.wip_schedule.freeze('v1')
+    with scope(event=slot.room.event):
+        return slot.submission.event.wip_schedule.freeze('v1')
